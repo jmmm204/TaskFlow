@@ -58,6 +58,9 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
 
+    //SPLASHSCREEN
+    implementation(libs.androidx.core.splashscreen)
+
     //NAVIGATION
     implementation(libs.androidx.navigation.compose)
     implementation(libs.kotlinx.serialization.json)

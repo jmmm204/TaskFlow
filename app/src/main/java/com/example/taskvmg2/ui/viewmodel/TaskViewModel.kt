@@ -4,14 +4,16 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
-import com.example.taskvmg2.ui.repository.TaskRepository
 import com.example.taskvmg2.ui.model.Task
+import com.example.taskvmg2.ui.repository.TaskRepository
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 class TaskViewModel : ViewModel() {
-    private val repository = TaskRepository()
 
-    var tasks by mutableStateOf(listOf<Task>())
-        private set
+    private val _tasks = MutableStateFlow<List<Task>>(emptyList())
+    val tasks: StateFlow<List<Task>> = _tasks.asStateFlow()
 
     var id by mutableStateOf("")
         private set
@@ -20,55 +22,49 @@ class TaskViewModel : ViewModel() {
     var completed by mutableStateOf(false)
         private set
 
-
     init {
-        loadTask()
+        loadTasks()
     }
 
-    fun onIdChange(newId: String) {
-        this.id = newId
-    }
-    fun onTitleChange(newTitle: String) {
-        this.title = newTitle
-    }
-    fun onCompletedChange(newCompleted: Boolean) {
-        this.completed = newCompleted
+    fun onIdChange(newId: String) { id = newId }
+    fun onTitleChange(newTitle: String) { title = newTitle }
+
+    fun loadTasks() {
+        _tasks.value = TaskRepository.getTasks()
     }
 
-    private fun loadTask() {
-        tasks = repository.getTasks()
-    }
-    fun loadTask(taskId: Int?) {
-        if (taskId == null) {
+    fun loadTaskData(taskId: Int) {
+        if (taskId == -1) {
             clearForm()
-            return
         } else {
-            val task = repository.getTaskId(taskId)
-            task?.let {
-                id = it.id.toString()
-                title = it.title
-                completed = it.completed
+            val task = TaskRepository.getTaskById(taskId)
+            if (task != null) {
+                id = task.id.toString()
+                title = task.title
+                completed = task.completed
             }
         }
     }
-    fun addTask(task: Task) {
-        repository.addTask(task)
-        loadTask()
+
+    fun saveTask() {
+        val taskId = id.toIntOrNull() ?: (System.currentTimeMillis() % Int.MAX_VALUE).toInt()
+        TaskRepository.saveTask(Task(id = taskId, title = title, completed = completed))
+        loadTasks()
     }
+
     fun removeTask(task: Task) {
-        repository.removeTask(task)
-        loadTask()
+        TaskRepository.removeTask(task)
+        loadTasks()
     }
+
     fun toggleTask(task: Task) {
-        repository.toggleTask(task)
-        loadTask()
+        TaskRepository.toggleTask(task)
+        loadTasks()
     }
-    fun getTaskId(id: Int): Task? {
-        return repository.getTaskId(id)
-    }
-    fun clearForm(){
-        id=""
-        title=""
-        completed=false
+
+    private fun clearForm() {
+        id = ""
+        title = ""
+        completed = false
     }
 }
